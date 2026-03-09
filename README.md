@@ -1,4 +1,6 @@
-# salon-booking-system
+# Salon-booking-system (名家理髮廳)
+
+* **地圖連結：** https://share.google/VwdpyG9pYoZ6DaOg6
 
 ## 系統概述
 
