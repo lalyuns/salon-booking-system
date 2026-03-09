@@ -4,7 +4,7 @@
 
 整合 LINE LIFF 與 FastAPI 的美髮自動化預約系統。
 
-## 技術堆疊
+## 使用技術
 
 * 前端：LINE LIFF (GitHub Pages)
 * 後端：Python FastAPI (Render / Zeabur)
