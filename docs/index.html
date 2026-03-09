@@ -5,9 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>理髮店線上預約</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        .card { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h1 style="text-align: center; margin-top: 50px;">歡迎來到理髮店預約系統</h1>
-    <p style="text-align: center;">前端介面部署成功！等待串接 LINE LIFF...</p>
+    <h1>💈 理髮店預約系統</h1>
+    <div id="status">正在載入 LINE 登入系統...</div>
+
+    <div id="profileBox" class="card" style="display: none;">
+        <h2>歡迎, <span id="displayName"></span>!</h2>
+        <p>系統連線狀態：<span id="apiStatus">測試中...</span></p>
+    </div>
+
+    <script>
+        const liffId = "2009389155-HyKE5PeC";
+        const apiUrl = "https://salon-api-zhou-wei-lun.onrender.com";
+
+        async function initLiff() {
+            try {
+                await liff.init({ liffId: liffId });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                } else {
+                    const profile = await liff.getProfile();
+                    document.getElementById('displayName').innerText = profile.displayName;
+                    document.getElementById('status').style.display = 'none';
+                    document.getElementById('profileBox').style.display = 'block';
+                    
+                    testApiConnection();
+                }
+            } catch (err) {
+                document.getElementById('status').innerHTML = '<span class="error">LIFF 初始化失敗：' + err.message + '</span>';
+            }
+        }
+
+        async function testApiConnection() {
+            try {
+                const response = await fetch(apiUrl + "/");
+                const data = await response.json();
+                document.getElementById('apiStatus').innerHTML = `<span class="success">連線成功 (${data.timezone})</span>`;
+            } catch (err) {
+                document.getElementById('apiStatus').innerHTML = '<span class="error">後端連線失敗，請檢查 CORS 設定</span>';
+            }
+        }
+
+        initLiff();
+    </script>
 </body>
 </html>
