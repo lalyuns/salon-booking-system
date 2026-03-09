@@ -75,3 +75,5 @@
 * `LINE_CHANNEL_ACCESS_TOKEN`
 * `LIFF_ID`
 * `DATABASE_URL`
+
+**LIFF 網址：** https://liff.line.me/2009389155-HyKE5PeC
