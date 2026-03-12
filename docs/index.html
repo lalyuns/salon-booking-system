@@ -9,23 +9,33 @@
         body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
         .card { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
         .service-item { margin: 12px 0; font-size: 16px; }
-        button { width: 100%; padding: 12px; margin-top: 20px; background-color: #00B900; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button { width: 100%; padding: 12px; margin-top: 10px; background-color: #00B900; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        .slot-btn { width: 30%; background-color: #f0f0f0; color: #333; margin: 5px 1%; }
+        .slot-btn.selected { background-color: #00B900; color: white; }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">💈 理髮店預約系統</h1>
+    <h1 style="text-align: center;">💈 理髮店預約</h1>
     <div id="status" style="text-align: center;">正在載入 LINE 登入系統...</div>
 
-    <div id="bookingForm" class="card" style="display: none;">
-        <h2>歡迎, <span id="displayName"></span>!</h2>
-        <h3>請選擇服務項目：</h3>
+    <div id="step1" class="card" style="display: none;">
+        <h3>1. 請選擇服務項目：</h3>
         <div id="servicesList">載入菜單中...</div>
-        <button onclick="submitSelection()">下一步 (選擇時間)</button>
+        <button onclick="goToStep2()">下一步</button>
+    </div>
+
+    <div id="step2" class="card" style="display: none;">
+        <h3>2. 選擇日期與時間：</h3>
+        <input type="date" id="bookDate" onchange="loadSlots()" style="width: 93%; padding: 10px; margin-bottom: 15px;">
+        <div id="slotsContainer" style="display: flex; flex-wrap: wrap;">請先選擇日期</div>
+        <button onclick="goToStep1()" style="background-color: #aaa;">上一步</button>
+        <button onclick="submitBooking()">確認預約</button>
     </div>
 
     <script>
         const liffId = "2009389155-HyKE5PeC";
         const apiUrl = "https://salon-api-zhou-wei-lun.onrender.com";
+        let globalState = { services: [], date: '', time: '', userId: '' };
 
         async function initLiff() {
             try {
@@ -34,10 +44,14 @@
                     liff.login();
                 } else {
                     const profile = await liff.getProfile();
-                    document.getElementById('displayName').innerText = profile.displayName;
+                    globalState.userId = profile.userId;
                     document.getElementById('status').style.display = 'none';
-                    document.getElementById('bookingForm').style.display = 'block';
+                    document.getElementById('step1').style.display = 'block';
                     loadServices();
+                    
+                    // 限制只能選今天以後的日期
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('bookDate').setAttribute('min', today);
                 }
             } catch (err) {
                 document.getElementById('status').innerText = 'LIFF 初始化失敗';
@@ -45,35 +59,62 @@
         }
 
         async function loadServices() {
-            try {
-                const response = await fetch(apiUrl + "/api/services");
-                const services = await response.json();
-                const container = document.getElementById('servicesList');
-                container.innerHTML = '';
-                
-                services.forEach(service => {
-                    const div = document.createElement('div');
-                    div.className = 'service-item';
-                    div.innerHTML = `
-                        <label>
-                            <input type="checkbox" name="service" value="${service.id}">
-                            ${service.name} (${service.duration} 分鐘)
-                        </label>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (err) {
-                document.getElementById('servicesList').innerHTML = '<span style="color:red;">無法載入菜單，請檢查連線</span>';
-            }
+            const response = await fetch(apiUrl + "/api/services");
+            const services = await response.json();
+            const container = document.getElementById('servicesList');
+            container.innerHTML = '';
+            services.forEach(s => {
+                container.innerHTML += `<label class="service-item" style="display:block;"><input type="checkbox" name="service" value="${s.id}"> ${s.name} (${s.duration} 分鐘)</label>`;
+            });
         }
 
-        function submitSelection() {
+        function goToStep2() {
             const selected = Array.from(document.querySelectorAll('input[name="service"]:checked')).map(cb => cb.value);
-            if(selected.length === 0) {
-                alert('請至少選擇一項服務');
+            if (selected.length === 0) return alert('請至少選擇一項服務');
+            globalState.services = selected;
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('step2').style.display = 'block';
+        }
+
+        function goToStep1() {
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step1').style.display = 'block';
+        }
+
+        async function loadSlots() {
+            const date = document.getElementById('bookDate').value;
+            if (!date) return;
+            globalState.date = date;
+            globalState.time = '';
+            
+            const container = document.getElementById('slotsContainer');
+            container.innerHTML = '載入時段中...';
+            
+            const response = await fetch(`${apiUrl}/api/availability?target_date=${date}`);
+            const data = await response.json();
+            
+            container.innerHTML = '';
+            if(data.available_slots.length === 0) {
+                container.innerHTML = '此日期無可用時段';
                 return;
             }
-            alert('已記錄您選擇的服務 ID: ' + selected.join(', ') + '。準備進入時間選擇模組。');
+            
+            data.available_slots.forEach(time => {
+                const btn = document.createElement('button');
+                btn.className = 'slot-btn';
+                btn.innerText = time;
+                btn.onclick = () => {
+                    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    globalState.time = time;
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function submitBooking() {
+            if (!globalState.date || !globalState.time) return alert('請完整選擇日期與時間');
+            alert(`✅ 前端測試成功！\n接下來會將這筆資料送進資料庫：\n日期：${globalState.date}\n時間：${globalState.time}\n服務項目 ID：${globalState.services.join(', ')}\nLINE ID：${globalState.userId}`);
         }
 
         initLiff();
