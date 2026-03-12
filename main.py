@@ -124,6 +124,12 @@ def send_line_notification(user_line_id: str, appointment: models.Appointment):
 
 
 # ── 基礎路由 ──────────────────────────────────────────────────────────────────
+@app.post("/webhook")
+def line_webhook():
+    """LINE Messaging API Webhook 驗證端點，回傳 200 即可"""
+    return {"status": "ok"}
+
+
 @app.get("/")
 def read_root():
     tz = os.getenv("TZ", "未設定")
