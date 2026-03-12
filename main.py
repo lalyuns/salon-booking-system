@@ -110,7 +110,7 @@ def send_line_notification(user_line_id: str, appointment: models.Appointment):
     }
 
     try:
-        http_requests.post(
+        res = http_requests.post(
             "https://api.line.me/v2/bot/message/push",
             headers={
                 "Authorization": f"Bearer {token}",
@@ -119,8 +119,9 @@ def send_line_notification(user_line_id: str, appointment: models.Appointment):
             json={"to": user_line_id, "messages": [flex_message]},
             timeout=5
         )
-    except Exception:
-        pass  # 通知失敗不影響預約結果
+        print(f"[LINE NOTIFY] status={res.status_code} body={res.text}")
+    except Exception as e:
+        print(f"[LINE NOTIFY] error={e}")
 
 
 # ── 基礎路由 ──────────────────────────────────────────────────────────────────
