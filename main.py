@@ -58,21 +58,25 @@ def create_appointment(booking: BookingRequest, db: Session = Depends(get_db)):
     # 2. 將字串時間轉換為 Python 可以理解的時間格式
     start_time = datetime.strptime(f"{booking.date} {booking.time}", "%Y-%m-%d %H:%M")
     
+    # [修正] 動態抓取第一位設計師(老闆)的 ID，避免寫死導致 Foreign Key 報錯
+    boss = db.query(models.Designer).first()
+    boss_id = boss.id if boss else 1
+
     # 3. 建立主要的預約紀錄
     new_apt = models.Appointment(
         user_id=user.id,
-        designer_id=1,  # 預設給老闆 (ID=1)
+        designer_id=boss_id, 
         start_time=start_time,
-        end_time=start_time + timedelta(hours=1) # 暫設皆為一小時
+        end_time=start_time + timedelta(hours=1) 
     )
+    
+    # 4. [修正] 使用 SQLAlchemy ORM 原生寫法綁定服務項目，由框架自動處理多對多中介表
+    selected_services = db.query(models.Service).filter(models.Service.id.in_(booking.service_ids)).all()
+    new_apt.services = selected_services
+
+    # 5. 一次性寫入資料庫
     db.add(new_apt)
     db.commit()
     db.refresh(new_apt)
-
-    # 4. 把預約跟多個「服務項目」綁定起來 (多對多寫入)
-    for s_id in booking.service_ids:
-        stmt = models.appointment_services.insert().values(appointment_id=new_apt.id, service_id=s_id)
-        db.execute(stmt)
-    db.commit()
 
     return {"message": "預約成功！", "appointment_id": new_apt.id}
