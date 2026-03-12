@@ -6,30 +6,141 @@
     <title>理髮店線上預約</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
-        .card { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }
-        .service-item { margin: 12px 0; font-size: 16px; }
-        button { width: 100%; padding: 12px; margin-top: 10px; background-color: #00B900; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
-        .slot-btn { width: 30%; background-color: #f0f0f0; color: #333; margin: 5px 1%; }
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; padding: 0; max-width: 400px; margin: auto; background: #f5f5f5; }
+
+        /* ── 頂部標題 ── */
+        .header {
+            background: #00B900;
+            color: white;
+            text-align: center;
+            padding: 16px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* ── 分頁切換列 ── */
+        .tab-bar {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            color: #aaa;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+        }
+        .tab.active {
+            color: #00B900;
+            border-bottom-color: #00B900;
+        }
+
+        /* ── 內容區 ── */
+        .content { padding: 16px; }
+
+        /* ── 預約步驟卡片 ── */
+        .card {
+            background: white;
+            margin-bottom: 16px;
+            padding: 16px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .card h3 { margin-top: 0; color: #333; }
+
+        /* ── 服務項目 ── */
+        .service-item { margin: 12px 0; font-size: 16px; display: block; }
+
+        /* ── 按鈕 ── */
+        button {
+            width: 100%; padding: 12px; margin-top: 10px;
+            background-color: #00B900; color: white;
+            border: none; border-radius: 8px; font-size: 16px; cursor: pointer;
+        }
+        button:disabled { background-color: #aaa; cursor: not-allowed; }
+
+        /* ── 時段按鈕 ── */
+        .slot-btn { width: 30%; background-color: #f0f0f0; color: #333; margin: 4px 1%; }
         .slot-btn.selected { background-color: #00B900; color: white; }
+
+        /* ── 我的預約卡片 ── */
+        .apt-card {
+            background: white;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid #00B900;
+        }
+        .apt-date { font-size: 17px; font-weight: bold; color: #222; margin-bottom: 6px; }
+        .apt-services { font-size: 14px; color: #666; margin-bottom: 10px; }
+        .cancel-btn {
+            width: auto;
+            padding: 7px 16px;
+            background-color: #ff4444;
+            font-size: 14px;
+            margin-top: 0;
+            border-radius: 6px;
+        }
+        .cancel-btn:hover { background-color: #cc0000; }
+
+        /* ── 空白提示 ── */
+        .empty-hint {
+            text-align: center;
+            color: #aaa;
+            padding: 40px 0;
+            font-size: 15px;
+        }
+
+        /* ── 狀態提示 ── */
+        #status { text-align: center; padding: 40px 16px; color: #666; }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">💈 理髮店預約</h1>
-    <div id="status" style="text-align: center;">正在載入 LINE 登入系統...</div>
+    <div class="header">💈 理髮店預約</div>
+    <div id="status">正在載入 LINE 登入系統...</div>
 
-    <div id="step1" class="card" style="display: none;">
-        <h3>1. 請選擇服務項目：</h3>
-        <div id="servicesList">載入菜單中...</div>
-        <button onclick="goToStep2()">下一步</button>
-    </div>
+    <div id="app" style="display:none;">
+        <!-- 分頁列 -->
+        <div class="tab-bar">
+            <button class="tab active" id="tab-booking" onclick="switchTab('booking')">✂️ 新增預約</button>
+            <button class="tab" id="tab-myBookings" onclick="switchTab('myBookings')">📋 我的預約</button>
+        </div>
 
-    <div id="step2" class="card" style="display: none;">
-        <h3>2. 選擇日期與時間：</h3>
-        <input type="date" id="bookDate" onchange="loadSlots()" style="width: 93%; padding: 10px; margin-bottom: 15px;">
-        <div id="slotsContainer" style="display: flex; flex-wrap: wrap;">請先選擇日期</div>
-        <button onclick="goToStep1()" style="background-color: #aaa;">上一步</button>
-        <button onclick="submitBooking()">確認預約</button>
+        <!-- ═══ 新增預約分頁 ═══ -->
+        <div id="page-booking" class="content">
+            <!-- 步驟 1：選服務 -->
+            <div id="step1" class="card">
+                <h3>1. 請選擇服務項目</h3>
+                <div id="servicesList">載入菜單中...</div>
+                <button onclick="goToStep2()">下一步</button>
+            </div>
+
+            <!-- 步驟 2：選日期時段 -->
+            <div id="step2" class="card" style="display:none;">
+                <h3>2. 選擇日期與時間</h3>
+                <input type="date" id="bookDate" onchange="loadSlots()"
+                    style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; font-size:15px;">
+                <div id="slotsContainer" style="display:flex; flex-wrap:wrap;">請先選擇日期</div>
+                <button onclick="goToStep1()" style="background-color:#aaa; margin-top:10px;">上一步</button>
+                <button onclick="submitBooking()">確認預約</button>
+            </div>
+        </div>
+
+        <!-- ═══ 我的預約分頁 ═══ -->
+        <div id="page-myBookings" class="content" style="display:none;">
+            <div id="bookingsList">
+                <div class="empty-hint">載入中...</div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -37,6 +148,7 @@
         const apiUrl = "https://salon-api-zhou-wei-lun.onrender.com";
         let globalState = { services: [], date: '', time: '', userId: '' };
 
+        // ── LIFF 初始化 ──────────────────────────────────────────────────────
         async function initLiff() {
             try {
                 await liff.init({ liffId: liffId });
@@ -45,29 +157,47 @@
                 } else {
                     const profile = await liff.getProfile();
                     globalState.userId = profile.userId;
+
                     document.getElementById('status').style.display = 'none';
-                    document.getElementById('step1').style.display = 'block';
-                    loadServices();
-                    
+                    document.getElementById('app').style.display = 'block';
+
                     // 限制只能選今天以後的日期
                     const today = new Date().toISOString().split('T')[0];
                     document.getElementById('bookDate').setAttribute('min', today);
+
+                    loadServices();
                 }
             } catch (err) {
-                document.getElementById('status').innerText = 'LIFF 初始化失敗';
+                document.getElementById('status').innerText = 'LIFF 初始化失敗，請重新開啟頁面。';
             }
         }
 
+        // ── 分頁切換 ─────────────────────────────────────────────────────────
+        function switchTab(tabName) {
+            document.getElementById('page-booking').style.display    = (tabName === 'booking')    ? 'block' : 'none';
+            document.getElementById('page-myBookings').style.display = (tabName === 'myBookings') ? 'block' : 'none';
+
+            document.getElementById('tab-booking').classList.toggle('active',    tabName === 'booking');
+            document.getElementById('tab-myBookings').classList.toggle('active', tabName === 'myBookings');
+
+            if (tabName === 'myBookings') loadMyAppointments();
+        }
+
+        // ── 載入服務菜單 ──────────────────────────────────────────────────────
         async function loadServices() {
             const response = await fetch(apiUrl + "/api/services");
             const services = await response.json();
             const container = document.getElementById('servicesList');
             container.innerHTML = '';
             services.forEach(s => {
-                container.innerHTML += `<label class="service-item" style="display:block;"><input type="checkbox" name="service" value="${s.id}"> ${s.name} (${s.duration} 分鐘)</label>`;
+                container.innerHTML += `<label class="service-item">
+                    <input type="checkbox" name="service" value="${s.id}">
+                    ${s.name} <span style="color:#888;font-size:13px;">(${s.duration} 分鐘)</span>
+                </label>`;
             });
         }
 
+        // ── 預約步驟切換 ──────────────────────────────────────────────────────
         function goToStep2() {
             const selected = Array.from(document.querySelectorAll('input[name="service"]:checked')).map(cb => cb.value);
             if (selected.length === 0) return alert('請至少選擇一項服務');
@@ -81,24 +211,25 @@
             document.getElementById('step1').style.display = 'block';
         }
 
+        // ── 載入可用時段（選項 B 動態演算法） ─────────────────────────────────
         async function loadSlots() {
             const date = document.getElementById('bookDate').value;
             if (!date) return;
             globalState.date = date;
             globalState.time = '';
-            
+
             const container = document.getElementById('slotsContainer');
             container.innerHTML = '載入時段中...';
-            
+
             const response = await fetch(`${apiUrl}/api/availability?target_date=${date}`);
             const data = await response.json();
-            
+
             container.innerHTML = '';
-            if(data.available_slots.length === 0) {
-                container.innerHTML = '此日期無可用時段';
+            if (data.available_slots.length === 0) {
+                container.innerHTML = '<p style="color:#888;font-size:14px;">此日期已無可用時段</p>';
                 return;
             }
-            
+
             data.available_slots.forEach(time => {
                 const btn = document.createElement('button');
                 btn.className = 'slot-btn';
@@ -112,10 +243,10 @@
             });
         }
 
+        // ── 送出預約（選項 C：後端會自動推 LINE 通知） ────────────────────────
         async function submitBooking() {
             if (!globalState.date || !globalState.time) return alert('請完整選擇日期與時間');
-            
-            // 將按鈕文字改成「處理中」，避免客人重複點擊
+
             const btn = document.querySelector('button[onclick="submitBooking()"]');
             btn.innerText = "預約送出中...";
             btn.disabled = true;
@@ -135,10 +266,17 @@
                 });
 
                 if (response.ok) {
-                    alert("🎉 預約成功！期待您的光臨！");
-                    liff.closeWindow(); // 預約成功後自動關閉 LINE LIFF 視窗
+                    alert("🎉 預約成功！請至「我的預約」查看詳情。");
+                    // 重置表單並跳到我的預約
+                    document.querySelectorAll('input[name="service"]').forEach(cb => cb.checked = false);
+                    document.getElementById('bookDate').value = '';
+                    document.getElementById('slotsContainer').innerHTML = '請先選擇日期';
+                    globalState.time = '';
+                    goToStep1();
+                    switchTab('myBookings');
                 } else {
-                    alert("❌ 預約失敗，請稍後再試或聯繫客服。");
+                    const err = await response.json().catch(() => ({}));
+                    alert("❌ 預約失敗：" + (err.detail || "請稍後再試或聯繫客服。"));
                     btn.innerText = "確認預約";
                     btn.disabled = false;
                 }
@@ -146,6 +284,66 @@
                 alert("❌ 連線發生錯誤，請檢查網路狀態。");
                 btn.innerText = "確認預約";
                 btn.disabled = false;
+            }
+        }
+
+        // ── 載入我的預約（選項 A） ────────────────────────────────────────────
+        async function loadMyAppointments() {
+            const container = document.getElementById('bookingsList');
+            container.innerHTML = '<div class="empty-hint">載入中...</div>';
+
+            try {
+                const response = await fetch(`${apiUrl}/api/appointments?user_line_id=${globalState.userId}`);
+                const appointments = await response.json();
+
+                if (appointments.length === 0) {
+                    container.innerHTML = '<div class="empty-hint">目前沒有預約紀錄<br>快去預約吧！✂️</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                appointments.forEach(apt => {
+                    const services = apt.services.length > 0 ? apt.services.join('、') : '無服務資料';
+                    const card = document.createElement('div');
+                    card.className = 'apt-card';
+                    card.innerHTML = `
+                        <div class="apt-date">📅 ${apt.start_time}</div>
+                        <div class="apt-services">✂️ ${services}</div>
+                        <button class="cancel-btn" onclick="cancelAppointment(${apt.id}, this)">取消預約</button>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (err) {
+                container.innerHTML = '<div class="empty-hint">載入失敗，請重新整理頁面。</div>';
+            }
+        }
+
+        // ── 取消預約（選項 A） ────────────────────────────────────────────────
+        async function cancelAppointment(appointmentId, btnEl) {
+            if (!confirm('確定要取消這筆預約嗎？')) return;
+
+            btnEl.innerText = '處理中...';
+            btnEl.disabled = true;
+
+            try {
+                const response = await fetch(
+                    `${apiUrl}/api/appointments/${appointmentId}/cancel?user_line_id=${globalState.userId}`,
+                    { method: "PATCH" }
+                );
+
+                if (response.ok) {
+                    alert('已成功取消預約。');
+                    loadMyAppointments();  // 重新整理列表
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    alert('取消失敗：' + (err.detail || '請稍後再試。'));
+                    btnEl.innerText = '取消預約';
+                    btnEl.disabled = false;
+                }
+            } catch (err) {
+                alert('連線錯誤，請稍後再試。');
+                btnEl.innerText = '取消預約';
+                btnEl.disabled = false;
             }
         }
 
