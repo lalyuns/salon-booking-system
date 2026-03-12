@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Query, HTTPException
+from fastapi import FastAPI, Depends, Query, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -125,8 +125,12 @@ def send_line_notification(user_line_id: str, appointment: models.Appointment):
 
 # ── 基礎路由 ──────────────────────────────────────────────────────────────────
 @app.post("/webhook")
-def line_webhook():
-    """LINE Messaging API Webhook 驗證端點，回傳 200 即可"""
+async def line_webhook(request: Request):
+    """LINE Messaging API Webhook — 印出 user ID 方便測試"""
+    body = await request.json()
+    for event in body.get("events", []):
+        user_id = event.get("source", {}).get("userId", "")
+        print(f"[WEBHOOK] LINE User ID: {user_id}")
     return {"status": "ok"}
 
 
