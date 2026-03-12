@@ -1,6 +1,7 @@
 # Salon-booking-system (名家理髮廳)
 
 * **地圖連結：** https://share.google/VwdpyG9pYoZ6DaOg6
+* **開發紀錄（做了什麼 & 所有連結）：** [DEVLOG.md](./DEVLOG.md)
 
 ## 商家痛點
 
