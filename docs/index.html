@@ -112,9 +112,41 @@
             });
         }
 
-        function submitBooking() {
+        async function submitBooking() {
             if (!globalState.date || !globalState.time) return alert('請完整選擇日期與時間');
-            alert(`✅ 前端測試成功！\n接下來會將這筆資料送進資料庫：\n日期：${globalState.date}\n時間：${globalState.time}\n服務項目 ID：${globalState.services.join(', ')}\nLINE ID：${globalState.userId}`);
+            
+            // 將按鈕文字改成「處理中」，避免客人重複點擊
+            const btn = document.querySelector('button[onclick="submitBooking()"]');
+            btn.innerText = "預約送出中...";
+            btn.disabled = true;
+
+            const payload = {
+                user_line_id: globalState.userId,
+                service_ids: globalState.services.map(id => parseInt(id)),
+                date: globalState.date,
+                time: globalState.time
+            };
+
+            try {
+                const response = await fetch(apiUrl + "/api/appointments", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert("🎉 預約成功！期待您的光臨！");
+                    liff.closeWindow(); // 預約成功後自動關閉 LINE LIFF 視窗
+                } else {
+                    alert("❌ 預約失敗，請稍後再試或聯繫客服。");
+                    btn.innerText = "確認預約";
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert("❌ 連線發生錯誤，請檢查網路狀態。");
+                btn.innerText = "確認預約";
+                btn.disabled = false;
+            }
         }
 
         initLiff();
