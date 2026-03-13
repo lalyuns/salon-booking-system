@@ -133,15 +133,15 @@ flowchart TB
     end
 
     subgraph LINE 平台
-        B[Rich Menu\nLINE OA Manager]
-        C[LIFF Runtime\nliff.line.me]
-        D[LINE Messaging API\napi.line.me]
+        B[Rich Menu<br/>LINE OA Manager]
+        C[LIFF Runtime<br/>liff.line.me]
+        D[LINE Messaging API<br/>api.line.me]
     end
 
     subgraph 我們自己的系統
-        E[前端頁面\nGitHub Pages\ndocs/index.html]
-        F[後端 API\nRender\nFastAPI]
-        G[資料庫\nAiven MySQL]
+        E[前端頁面<br/>GitHub Pages<br/>docs/index.html]
+        F[後端 API<br/>Render<br/>FastAPI]
+        G[資料庫<br/>Aiven MySQL]
     end
 
     A -- 點擊 Rich Menu --> C
