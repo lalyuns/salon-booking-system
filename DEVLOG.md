@@ -133,9 +133,9 @@ flowchart TB
     end
 
     subgraph LINE 平台
-        B[Rich Menu\nLINE OA Manager]
-        C[LIFF Runtime\nliff.line.me]
-        D[LINE Messaging API\napi.line.me]
+        B[Rich Menu\n LINE OA Manager]
+        C[LIFF Runtime\n liff.line.me]
+        D[LINE Messaging API\n api.line.me]
     end
 
     subgraph 我們自己的系統
