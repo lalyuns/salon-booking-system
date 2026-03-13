@@ -265,3 +265,19 @@ def cancel_appointment(
     db.commit()
 
     return {"message": "已成功取消預約"}
+
+
+# ── 臨時：清除測試資料（用完立刻移除）────────────────────────────────────────
+@app.delete("/admin/cleanup-test-data")
+def cleanup_test_data(db: Session = Depends(get_db)):
+    """刪除所有測試預約與測試用戶"""
+    # 刪除 test_user_123
+    test_user = db.query(models.User).filter(models.User.line_id == "test_user_123").first()
+    if test_user:
+        for apt in db.query(models.Appointment).filter(models.Appointment.user_id == test_user.id).all():
+            apt.services = []
+            db.delete(apt)
+        db.delete(test_user)
+
+    db.commit()
+    return {"message": "測試資料已清除"}
