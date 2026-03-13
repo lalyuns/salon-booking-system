@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, Query, HTTPException, Request
+from fastapi import FastAPI, Depends, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -34,9 +34,7 @@ class BookingRequest(BaseModel):
 def send_line_notification(user_line_id: str, appointment: models.Appointment):
     """預約成功後，推送 LINE Flex Message 給客人"""
     token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
-    print(f"[LINE NOTIFY] token loaded: {'YES (len=' + str(len(token)) + ')' if token else 'NO (empty)'}")
     if not token or token == "your_token_here":
-        print("[LINE NOTIFY] skipped: token not configured")
         return
 
     service_names = "、".join([s.name for s in appointment.services]) or "未選擇"
@@ -112,7 +110,7 @@ def send_line_notification(user_line_id: str, appointment: models.Appointment):
     }
 
     try:
-        res = http_requests.post(
+        http_requests.post(
             "https://api.line.me/v2/bot/message/push",
             headers={
                 "Authorization": f"Bearer {token}",
@@ -121,19 +119,14 @@ def send_line_notification(user_line_id: str, appointment: models.Appointment):
             json={"to": user_line_id, "messages": [flex_message]},
             timeout=5
         )
-        print(f"[LINE NOTIFY] status={res.status_code} body={res.text}")
-    except Exception as e:
-        print(f"[LINE NOTIFY] error={e}")
+    except Exception:
+        pass
 
 
 # ── 基礎路由 ──────────────────────────────────────────────────────────────────
 @app.post("/webhook")
-async def line_webhook(request: Request):
-    """LINE Messaging API Webhook — 印出 user ID 方便測試"""
-    body = await request.json()
-    for event in body.get("events", []):
-        user_id = event.get("source", {}).get("userId", "")
-        print(f"[WEBHOOK] LINE User ID: {user_id}")
+def line_webhook():
+    """LINE Messaging API Webhook 驗證端點"""
     return {"status": "ok"}
 
 
