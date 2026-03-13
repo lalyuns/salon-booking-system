@@ -2,6 +2,7 @@
 
 * **地圖連結：** https://share.google/VwdpyG9pYoZ6DaOg6
 * **開發紀錄（Achievements & 所有連結）：** [DEVLOG.md](./DEVLOG.md)
+* **Developer Manual（複製專案注意事項）：** [DEVELOPER_MANUAL.md](./DEVELOPER_MANUAL.md)
 
 ## 商家痛點
 
