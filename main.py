@@ -266,30 +266,3 @@ def cancel_appointment(
 
     return {"message": "已成功取消預約"}
 
-
-# ── 臨時：清除測試資料（用完立刻移除）────────────────────────────────────────
-@app.delete("/admin/cleanup-test-data")
-def cleanup_test_data(db: Session = Depends(get_db)):
-    """刪除所有測試預約與測試用戶，保留真實預約"""
-    deleted = []
-
-    # 1. 刪除 test_user_123 及其所有預約
-    test_user = db.query(models.User).filter(models.User.line_id == "test_user_123").first()
-    if test_user:
-        for apt in db.query(models.Appointment).filter(models.Appointment.user_id == test_user.id).all():
-            apt.services = []
-            db.delete(apt)
-            deleted.append(f"appointment id={apt.id}")
-        db.delete(test_user)
-        deleted.append("user test_user_123")
-
-    # 2. 刪除指定的測試預約 ID（保留 id=9 真實預約）
-    for apt_id in [6, 7, 8]:
-        apt = db.query(models.Appointment).filter(models.Appointment.id == apt_id).first()
-        if apt:
-            apt.services = []
-            db.delete(apt)
-            deleted.append(f"appointment id={apt_id}")
-
-    db.commit()
-    return {"message": "測試資料已清除", "deleted": deleted}
