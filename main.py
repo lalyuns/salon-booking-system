@@ -34,8 +34,10 @@ class BookingRequest(BaseModel):
 def send_line_notification(user_line_id: str, appointment: models.Appointment):
     """預約成功後，推送 LINE Flex Message 給客人"""
     token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+    print(f"[LINE NOTIFY] token loaded: {'YES (len=' + str(len(token)) + ')' if token else 'NO (empty)'}")
     if not token or token == "your_token_here":
-        return  # 未設定 token，靜默略過，不影響預約流程
+        print("[LINE NOTIFY] skipped: token not configured")
+        return
 
     service_names = "、".join([s.name for s in appointment.services]) or "未選擇"
     date_str = appointment.start_time.strftime("%Y 年 %m 月 %d 日")
